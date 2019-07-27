@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Show And Tell</title>
+    <meta name="viewport" content="width=device -width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+
+    <style>
+        @font-face {
+            font-family: HanzipenTC;
+            src: url('static/HanzipenTC-Regular.otf');
+}
+    </style>
+</head>
+<body>
+
+
+<div style="text-align: center; margin-left: auto; margin-right: auto;margin-top: 100px; margin-bottom: 80px">
+    <h1 style="font-size: 40px; font-family: 'HanzipenTC'"
+        class="vintage">Image caption generator</h1>
+</div>
+
+
+<div style="width: 610px; margin-left: auto; margin-right: auto;">
+
+    <fieldset class="layui-elem-field layui-field-title"
+              style="margin-top: 30px; margin-left: -20px; margin-right: -20px; margin-bottom: 30px">
+        <legend>Choose image</legend>
+    </fieldset>
+
+    <div class="layui-upload-drag" id="upload"
+         style="position: relative; width: 548px; height: 398px; margin-left: auto; margin-right: auto">
+        <i id="icon" class="layui-icon" style="position: absolute;left:0;top:180px; width: 100%; height: 30px;"></i>
+        <p id="note" class="layui-inline" style="position: absolute;left:0;top:260px; width: 100%; height: 120%;">
+            Click，or drag image here</p>
+        <div id='bg' style="width: 600px; height: 450px; position: absolute; left: 5px; top: 5px;">
+
+
+            <img id="img" style="visibility: hidden; background: #00F7DE;">
+
+        </div>
+
+    </div>
+
+    <div id="caption_div" style="width: 100%; visibility: hidden; margin-top: 50px">
+
+        <fieldset class="layui-elem-field layui-field-title"
+                  style="margin-top: 30px; margin-left: -20px; margin-right: -20px; margin-bottom: 30px">
+            <legend>Captions</legend>
+        </fieldset>
+
+        <blockquote id="caption1" class="layui-elem-quote"></blockquote>
+        <blockquote id="caption2" class="layui-elem-quote"></blockquote>
+        <blockquote id="caption3" class="layui-elem-quote"></blockquote>
+    </div>
+
+</div>
+
+
+<script src="../static/layui/layui.js"></script>
+<script>
+    layui.use(['upload', 'layer'], function () {
+        let $ = layui.jquery
+            , upload = layui.upload;
+
+        let index = null;
+        let caption_div = $('#caption_div');
+        //拖拽上传
+        upload.render({
+            elem: '#upload'
+            , url: '/upload'
+            , field: 'image'
+            , loading: false
+            , before: function (obj) {
+                //预读本地文件示例，不支持ie8
+                index = layer.load(0);
+                obj.preview(function (index, file, result) {
+                    let img = $('#img');
+                    img.attr('src', result); //图片链接（base64）
+                    getImageWidth(result, function (w, h) {
+                        let ratio = w / h;
+                        if (ratio > 4 / 3) {
+                            img.css('width', '600px');
+                            img.css('height', 600 / ratio + 'px');
+                            img.css('margin-top', 225 - 300 / ratio + 'px')
+                        } else {
+                            img.css('width', 450 * ratio + 'px');
+                            img.css('height', '450px');
+                            img.css('margin-top', '0px')
+                        }
+
+                        img.css('visibility', 'visible');
+
+                        let icon = $('#icon');
+                        icon.css('visibility', 'hidden');
+
+                        let note = $('#note');
+                        note.css('visibility', 'hidden');
+                        caption_div.css('visibility', 'hidden')
+                    });
+                });
+            }
+            , done: function (res) {
+                layer.close(index);
+                console.log(res);
+                if (res.success) {
+                    let results = res.results;
+
+                    let caption1 = $('#caption1');
+                    let caption2 = $('#caption2');
+                    let caption3 = $('#caption3');
+
+                    caption1.html(results[0]);
+                    caption2.html(results[1]);
+                    caption3.html(results[2]);
+
+                    caption_div.css('visibility', 'visible')
+                } else {
+                    layer.alert('ERROR')
+                }
+            }
+            , error: function () {
+                layer.close(index);
+                layer.alert('ERROR')
+            }
+        });
+
+    });
+
+
+    // 获取图片真实高度
+    function getImageWidth(url, callback) {
+        let img = new Image();
+        img.src = url;
+        // 如果图片被缓存，则直接返回缓存数据
+        if (img.complete) {
+            callback(img.width, img.height);
+        } else {
+            img.onload = function () {
+                callback(img.width, img.height);
+            }
+        }
+    }
+</script>
+</body>
+</html>
